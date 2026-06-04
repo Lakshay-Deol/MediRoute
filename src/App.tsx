@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAppStore } from './store/useAppStore';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import PatientHome from './pages/patient/Home';
 import DriverHome from './pages/driver/Home';
@@ -30,7 +31,7 @@ export default function App() {
         }}
       />
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/patient" element={<Protected><PatientHome /></Protected>} />
         <Route path="/driver" element={<Protected><DriverHome /></Protected>} />
