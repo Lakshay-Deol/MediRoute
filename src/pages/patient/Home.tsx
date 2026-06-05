@@ -16,9 +16,7 @@ interface RealHospital {
 // Fetch real nearby hospitals from OpenStreetMap Overpass (with 429 retry)
 async function fetchNearbyHospitals(lat: number, lon: number, retry = 0): Promise<RealHospital[]> {
   const query = `[out:json][timeout:15];node["amenity"="hospital"](around:5000,${lat},${lon});out 20;`;
-  const res = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST', body: 'data=' + encodeURIComponent(query),
-  });
+  const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
   if (res.status === 429 && retry < 2) {
     // Rate limited — wait and retry
     await new Promise(r => setTimeout(r, 3000 * (retry + 1)));
