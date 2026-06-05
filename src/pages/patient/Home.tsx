@@ -13,12 +13,18 @@ interface RealHospital {
   name: string;
 }
 
-// Fetch real nearby hospitals from OpenStreetMap Overpass
-async function fetchNearbyHospitals(lat: number, lon: number): Promise<RealHospital[]> {
-  const query = `[out:json][timeout:12];node["amenity"="hospital"](around:5000,${lat},${lon});out 20;`;
+// Fetch real nearby hospitals from OpenStreetMap Overpass (with 429 retry)
+async function fetchNearbyHospitals(lat: number, lon: number, retry = 0): Promise<RealHospital[]> {
+  const query = `[out:json][timeout:15];node["amenity"="hospital"](around:5000,${lat},${lon});out 20;`;
   const res = await fetch('https://overpass-api.de/api/interpreter', {
     method: 'POST', body: 'data=' + encodeURIComponent(query),
   });
+  if (res.status === 429 && retry < 2) {
+    // Rate limited — wait and retry
+    await new Promise(r => setTimeout(r, 3000 * (retry + 1)));
+    return fetchNearbyHospitals(lat, lon, retry + 1);
+  }
+  if (!res.ok) throw new Error(`Overpass ${res.status}`);
   const json = await res.json();
   return (json.elements as any[]).map((e: any) => ({
     id: e.id,
@@ -26,22 +32,6 @@ async function fetchNearbyHospitals(lat: number, lon: number): Promise<RealHospi
     lng: e.lon,
     name: e.tags?.name || e.tags?.['name:en'] || 'Hospital',
   }));
-}
-
-// Haversine distance in km
-function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-// Deterministic pseudo-random seeded by a number (hospital OSM id)
-function seeded(n: number, min: number, max: number) {
-  const x = Math.sin(n * 9301 + 49297) * 233280;
-  return Math.floor(min + (x - Math.floor(x)) * (max - min + 1));
 }
 
 const S = {
@@ -82,43 +72,28 @@ export default function PatientHome() {
     lng: mapCentre.lng + 0.003,
   };
 
-  // Auto-try geolocation silently on mount — fills location text AND centres the map
+  // Auto-try geolocation silently on mount for map centre
   useEffect(() => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
-        const { latitude: lat, longitude: lng } = coords;
-        setUserCoords({ lat, lng });
-        // Reverse-geocode to get human-readable address for the input
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
-          );
-          const data = await res.json();
-          const a = data.address;
-          const label = [
-            a.house_number ? `${a.house_number} ${a.road || ''}`.trim() : a.road,
-            a.suburb || a.neighbourhood,
-            a.city || a.town || a.village,
-            a.state,
-          ].filter(Boolean).join(', ');
-          setLocation(label || `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-        } catch {
-          setLocation(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-        }
+      ({ coords }) => {
+        setUserCoords({ lat: coords.latitude, lng: coords.longitude });
       },
-      () => {}, // silent fail — user can click Detect manually
-      { timeout: 6000 }
+      () => {}, // silent fail – user can click Detect
+      { timeout: 5000 }
     );
   }, []);
 
-  // Fetch real hospitals whenever coords update
+  // Fetch real hospitals whenever coords update (debounced 600 ms)
   useEffect(() => {
     if (!userCoords) return;
-    setLoadingHospitals(true);
-    fetchNearbyHospitals(userCoords.lat, userCoords.lng)
-      .then(h => { setRealHospitals(h); setLoadingHospitals(false); })
-      .catch(() => setLoadingHospitals(false));
+    const timer = setTimeout(() => {
+      setLoadingHospitals(true);
+      fetchNearbyHospitals(userCoords.lat, userCoords.lng)
+        .then(h => { setRealHospitals(h); setLoadingHospitals(false); })
+        .catch((err) => { console.error('Hospital fetch error:', err); setLoadingHospitals(false); });
+    }, 600);
+    return () => clearTimeout(timer);
   }, [userCoords]);
 
   // Scroll to selected hospital card
@@ -386,44 +361,40 @@ export default function PatientHome() {
                 }}
               />
             </div>
-            {/* Hospital cards from real OSM data */}
-            {realHospitals.length === 0 && !loadingHospitals && (
+            {/* Real hospital list from OpenStreetMap — sorted by distance */}
+            {loadingHospitals && realHospitals.length === 0 && (
               <div style={{ ...S.card, textAlign: 'center', color: '#94a3b8', padding: '32px' }}>
-                {userCoords
-                  ? '🏥 No hospitals found within 5 km of your location'
-                  : '📍 Allow location access to see real nearby hospitals'}
+                <div style={{ fontSize: '28px', marginBottom: '8px' }}>🔄</div>
+                <div style={{ fontSize: '14px' }}>Fetching nearby hospitals from OpenStreetMap…</div>
+                <div style={{ fontSize: '12px', marginTop: '4px' }}>Allow location for accurate results</div>
               </div>
             )}
-            {loadingHospitals && (
+
+            {!loadingHospitals && realHospitals.length === 0 && (
               <div style={{ ...S.card, textAlign: 'center', color: '#94a3b8', padding: '32px' }}>
-                Loading nearby hospitals from OpenStreetMap…
+                <div style={{ fontSize: '28px', marginBottom: '8px' }}>📍</div>
+                <div style={{ fontSize: '14px' }}>No hospitals found within 5 km</div>
+                <div style={{ fontSize: '12px', marginTop: '4px' }}>Try allowing location access or check your connection</div>
               </div>
             )}
+
             {[...realHospitals]
-              .sort((a, b) => {
-                if (!userCoords) return 0;
-                return haversine(userCoords.lat, userCoords.lng, a.lat, a.lng)
-                     - haversine(userCoords.lat, userCoords.lng, b.lat, b.lng);
+              .map(h => {
+                // Haversine distance in km
+                const R = 6371;
+                const dLat = (h.lat - mapCentre.lat) * Math.PI / 180;
+                const dLng = (h.lng - mapCentre.lng) * Math.PI / 180;
+                const a = Math.sin(dLat / 2) ** 2 +
+                  Math.cos(mapCentre.lat * Math.PI / 180) *
+                  Math.cos(h.lat * Math.PI / 180) *
+                  Math.sin(dLng / 2) ** 2;
+                const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                const etaMin = Math.round(distKm / 0.5); // ~30 km/h ambulance
+                return { ...h, distKm, etaMin };
               })
+              .sort((a, b) => a.distKm - b.distKm)
               .map((h, i) => {
-                const distKm = userCoords
-                  ? haversine(userCoords.lat, userCoords.lng, h.lat, h.lng)
-                  : null;
-                const distLabel = distKm !== null ? `${distKm.toFixed(1)} km` : '—';
-                const etaMins  = distKm !== null ? Math.max(2, Math.round(distKm * 3)) : null;
-                const etaLabel = etaMins !== null ? `${etaMins} min` : '—';
-                const rating   = (3.8 + seeded(h.id, 0, 12) / 10).toFixed(1);
-                const isFirst  = i === 0;
                 const isSelected = selectedHospId === h.id;
-
-                // Seeded bed counts (deterministic, stable per hospital)
-                const totalBeds = seeded(h.id, 80, 400);
-                const availBeds = seeded(h.id + 1, Math.floor(totalBeds * 0.05), Math.floor(totalBeds * 0.4));
-                const totalIcu  = seeded(h.id + 2, 15, 60);
-                const availIcu  = seeded(h.id + 3, 2, Math.floor(totalIcu * 0.4));
-                const totalVent = seeded(h.id + 4, 8, 30);
-                const availVent = seeded(h.id + 5, 1, Math.floor(totalVent * 0.5));
-
                 return (
                   <div
                     key={h.id}
@@ -433,72 +404,83 @@ export default function PatientHome() {
                       border: isSelected
                         ? '2px solid #059669'
                         : '1px solid #e2e8f0',
-                      boxShadow: isSelected
-                        ? '0 0 0 3px rgba(5,150,105,0.12)'
-                        : undefined,
-                      transition: 'border 0.2s, box-shadow 0.2s',
+                      background: isSelected ? '#f0fdf4' : '#fff',
+                      transition: 'border 0.2s, background 0.2s',
+                      scrollMarginTop: '12px',
                     }}
                   >
+                    {/* Header row */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                       <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                         <div style={{
-                          width: '36px', height: '36px', borderRadius: '10px',
-                          background: isSelected ? '#059669' : isFirst ? '#0f172a' : '#f1f5f9',
-                          color: isSelected || isFirst ? '#fff' : '#64748b',
+                          width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
+                          background: isSelected ? '#059669' : i === 0 ? '#0d9488' : '#f1f5f9',
+                          color: isSelected || i === 0 ? '#fff' : '#64748b',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontWeight: '800', fontSize: '14px', flexShrink: 0,
-                        }}>#{i + 1}</div>
+                          fontWeight: '800', fontSize: '14px',
+                        }}>
+                          {isSelected ? '✓' : `#${i + 1}`}
+                        </div>
                         <div>
                           <div style={{ fontWeight: '700', fontSize: '15px', color: '#0f172a' }}>{h.name}</div>
                           <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                            📍 {distLabel} · ⏱ {etaLabel} · ⭐ {rating}
+                            📍 {h.distKm < 1
+                              ? `${Math.round(h.distKm * 1000)} m`
+                              : `${h.distKm.toFixed(1)} km`} away
+                            &nbsp;·&nbsp; ⏱ ~{h.etaMin} min ETA
                           </div>
                         </div>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                        {isFirst && !isSelected && (
-                          <span style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', whiteSpace: 'nowrap' }}>✓ Nearest</span>
+                        {i === 0 && !isSelected && (
+                          <span style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', whiteSpace: 'nowrap' }}>
+                            ⚡ Nearest
+                          </span>
                         )}
                         {isSelected && (
-                          <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', whiteSpace: 'nowrap' }}>✓ Selected</span>
+                          <span style={{ background: '#059669', color: '#fff', padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', whiteSpace: 'nowrap' }}>
+                            ✓ Selected
+                          </span>
                         )}
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '12px' }}>
-                      {[
-                        { label: 'Beds', val: availBeds, total: totalBeds },
-                        { label: 'ICU',  val: availIcu,  total: totalIcu  },
-                        { label: 'Vents',val: availVent, total: totalVent },
-                      ].map(item => {
-                        const pct = (item.val / item.total) * 100;
-                        return (
-                          <div key={item.label} style={{ background: '#f8fafc', borderRadius: '8px', padding: '8px 10px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px' }}>
-                              <span style={{ color: '#64748b' }}>{item.label}</span>
-                              <span style={{ color: pct < 20 ? '#ef4444' : '#059669', fontWeight: '700' }}>{item.val}/{item.total}</span>
-                            </div>
-                            <div style={{ height: '4px', background: '#e2e8f0', borderRadius: '2px' }}>
-                              <div style={{ height: '100%', width: `${pct}%`, background: pct < 20 ? '#ef4444' : '#059669', borderRadius: '2px', transition: 'width 0.5s' }} />
-                            </div>
-                          </div>
-                        );
-                      })}
+                    {/* OSM source note */}
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>📡 OpenStreetMap</span>
+                      <span>Live data · {h.lat.toFixed(4)}, {h.lng.toFixed(4)}</span>
                     </div>
 
-                    <button
-                      onClick={() => {
-                        setSelectedHospId(h.id);
-                        toast.success(`🏥 ${h.name} selected`);
-                      }}
-                      style={{
-                        ...S.btn(isSelected ? '#059669' : i === 0 ? '#0f172a' : '#64748b'),
-                        width: '100%',
-                        transition: 'background 0.2s',
-                      }}
-                    >
-                      {isSelected ? '✓ Selected Hospital' : 'Select This Hospital'}
-                    </button>
+                    {/* Action buttons */}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => handleMapHospitalSelect(h)}
+                        style={{
+                          ...S.btn(isSelected ? '#059669' : '#0f172a'),
+                          flex: 1,
+                          background: isSelected
+                            ? '#059669'
+                            : 'linear-gradient(135deg, #0f172a, #1e293b)',
+                        }}
+                      >
+                        {isSelected ? '✓ Selected' : '🏥 Select Hospital'}
+                      </button>
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          ...S.btn('#0ea5e9'),
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        🗺️ Directions
+                      </a>
+                    </div>
                   </div>
                 );
               })
