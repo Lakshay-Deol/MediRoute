@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   // patient, driver, hospital, admin
+  createdAt DateTime @default(now())
+}
+
+model Hospital {
+  id                 String  @id @default(uuid())
+  name               String
+  address            String
+  lat                Float
+  lng                Float
+  totalBeds          Int     @default(50)
+  availableBeds      Int     @default(50)
+  icuTotal           Int     @default(10)
+  icuAvailable       Int     @default(10)
+  ventilatorsTotal   Int     @default(5)
+  ventilatorsAvailable Int   @default(5)
+  rating             Float   @default(4.0)
+  
+  requests           EmergencyRequest[]
+}
+
+model Ambulance {
+  id                 String  @id @default(uuid())
+  vehicleNumber      String  @unique
+  driverName         String
+  driverPhone        String
+  status             String  @default("available") // available, busy, offline
+  lat                Float
+  lng                Float
+  speed              Int     @default(0)
+  rating             Float   @default(4.5)
+  
+  requests           EmergencyRequest[]
+}
+
+model EmergencyRequest {
+  id                 String   @id @default(uuid())
+  patientName        String
+  patientAge         Int
+  patientBloodGroup  String
+  patientPhone       String
+  emergencyType      String
+  symptoms           String   // Stored as JSON string
+  severity           String   // critical, high, medium, low
+  status             String   @default("pending") // pending, dispatched, en_route, completed
+  
+  // Patient Location
+  lat                Float
+  lng                Float
+  address            String?
+  
+  // Relations
+  assignedHospitalId String?
+  hospital           Hospital? @relation(fields: [assignedHospitalId], references: [id])
+  
+  assignedAmbulanceId String?
+  ambulance          Ambulance? @relation(fields: [assignedAmbulanceId], references: [id])
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}

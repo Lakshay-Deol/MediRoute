@@ -3,11 +3,15 @@
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background: #f8fafc;
-  color: #0f172a;
+  background: #060d18;
+  color: #f8fafc;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 * { box-sizing: border-box; }
