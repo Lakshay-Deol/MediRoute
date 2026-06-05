@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { LatLng } from '../../data/mockData';
@@ -25,11 +25,22 @@ const createPatientIcon = () => L.divIcon({
   iconAnchor: [16, 16],
 });
 
-const createHospitalIcon = () => L.divIcon({
-  html: `<div style="background:#2563eb;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);font-size:14px;">🏥</div>`,
+const createHospitalIcon = (selected = false) => L.divIcon({
+  html: `<div style="
+    background:${selected ? '#059669' : '#2563eb'};
+    width:${selected ? '38px' : '32px'};
+    height:${selected ? '38px' : '32px'};
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    border:${selected ? '3px solid #10b981' : '3px solid white'};
+    box-shadow:${selected ? '0 0 0 4px rgba(5,150,105,0.25), 0 4px 12px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.3)'};
+    font-size:${selected ? '16px' : '14px'};
+    cursor:pointer;
+    transition:all 0.2s;
+  ">🏥</div>`,
   className: '',
-  iconSize: [32, 32],
-  iconAnchor: [16, 16],
+  iconSize: selected ? [38, 38] : [32, 32],
+  iconAnchor: selected ? [19, 19] : [16, 16],
 });
 
 interface MapMarker {
@@ -37,6 +48,7 @@ interface MapMarker {
   position: LatLng;
   label: string;
   info?: string;
+  selected?: boolean;
 }
 
 interface LiveMapProps {
@@ -46,6 +58,7 @@ interface LiveMapProps {
   polyline?: LatLng[];
   height?: string;
   className?: string;
+  onMarkerClick?: (marker: MapMarker) => void;
 }
 
 function RecenterMap({ center }: { center: LatLng }) {
@@ -63,6 +76,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({
   polyline,
   height = '400px',
   className = '',
+  onMarkerClick,
 }) => {
   return (
     <div style={{ height }} className={`rounded-2xl overflow-hidden border border-slate-100 shadow-sm ${className}`}>
@@ -81,14 +95,42 @@ export const LiveMap: React.FC<LiveMapProps> = ({
         {markers.map((marker, index) => {
           const icon =
             marker.type === 'ambulance' ? createAmbulanceIcon() :
-            marker.type === 'patient' ? createPatientIcon() :
-            createHospitalIcon();
+            marker.type === 'patient'   ? createPatientIcon() :
+            createHospitalIcon(marker.selected);
 
           return (
-            <Marker key={index} position={[marker.position.lat, marker.position.lng]} icon={icon}>
+            <Marker
+              key={index}
+              position={[marker.position.lat, marker.position.lng]}
+              icon={icon}
+              eventHandlers={onMarkerClick ? {
+                click: () => onMarkerClick(marker),
+              } : undefined}
+            >
               <Popup>
-                <div className="text-sm font-medium">{marker.label}</div>
-                {marker.info && <div className="text-xs text-gray-500 mt-1">{marker.info}</div>}
+                <div style={{ fontWeight: '700', fontSize: '13px' }}>{marker.label}</div>
+                {marker.info && (
+                  <div style={{
+                    fontSize: '11px', marginTop: '4px',
+                    color: marker.selected ? '#059669' : '#64748b',
+                    fontWeight: marker.selected ? '700' : '400',
+                  }}>
+                    {marker.info}
+                  </div>
+                )}
+                {marker.type === 'hospital' && onMarkerClick && (
+                  <button
+                    onClick={() => onMarkerClick(marker)}
+                    style={{
+                      marginTop: '8px', width: '100%', padding: '6px 0',
+                      background: marker.selected ? '#059669' : '#2563eb',
+                      color: '#fff', border: 'none', borderRadius: '6px',
+                      fontSize: '12px', fontWeight: '700', cursor: 'pointer',
+                    }}
+                  >
+                    {marker.selected ? '✓ Selected' : 'Select This Hospital'}
+                  </button>
+                )}
               </Popup>
             </Marker>
           );

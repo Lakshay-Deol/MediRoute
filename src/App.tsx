@@ -6,7 +6,6 @@ import Login from './pages/Login';
 import PatientHome from './pages/patient/Home';
 import DriverHome from './pages/driver/Home';
 import HospitalHome from './pages/hospital/Home';
-import AdminHome from './pages/admin/Home';
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAppStore();
@@ -36,7 +35,6 @@ export default function App() {
         <Route path="/patient" element={<Protected><PatientHome /></Protected>} />
         <Route path="/driver" element={<Protected><DriverHome /></Protected>} />
         <Route path="/hospital" element={<Protected><HospitalHome /></Protected>} />
-        <Route path="/admin" element={<Protected><AdminHome /></Protected>} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </>

@@ -5,14 +5,13 @@ import type { Role } from '../data/mockData';
 import toast from 'react-hot-toast';
 
 const ROLES: { id: Role; label: string; icon: string; desc: string }[] = [
-  { id: 'patient', label: 'Patient', icon: '🧑‍⚕️', desc: 'Request ambulance & track' },
-  { id: 'driver', label: 'Driver', icon: '🚑', desc: 'Accept & navigate emergencies' },
-  { id: 'hospital', label: 'Hospital', icon: '🏥', desc: 'Manage beds & patients' },
-  { id: 'admin', label: 'Admin', icon: '🛡️', desc: 'Monitor all operations' },
+  { id: 'patient',  label: 'Patient',  icon: '🧑‍⚕️', desc: 'Request ambulance & track' },
+  { id: 'driver',   label: 'Driver',   icon: '🚑',    desc: 'Accept & navigate emergencies' },
+  { id: 'hospital', label: 'Hospital', icon: '🏥',    desc: 'Manage beds & patients' },
 ];
 
-const ROUTES: Record<Role, string> = {
-  patient: '/patient', driver: '/driver', hospital: '/hospital', admin: '/admin',
+const ROUTES: Record<string, string> = {
+  patient: '/patient', driver: '/driver', hospital: '/hospital',
 };
 
 export default function Login() {

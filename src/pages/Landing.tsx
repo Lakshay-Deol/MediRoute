@@ -6,14 +6,14 @@ import { MapPin, BrainCircuit, Activity, ShieldAlert, Navigation } from 'lucide-
    Full-screen background map (fixed, dim)
 ───────────────────────────────────────── */
 const HOSPITALS = [
-  { x: 180, y: 110, name: 'AIIMS Delhi',          beds: 42 },
-  { x: 500, y: 190, name: 'Apollo Hospital',       beds: 18 },
-  { x: 330, y: 290, name: 'Safdarjung',            beds: 7  },
-  { x:  90, y: 310, name: 'Ram Manohar Lohia',     beds: 31 },
-  { x: 590, y: 330, name: 'Max Healthcare',        beds: 25 },
-  { x: 410, y:  75, name: 'Fortis',                beds: 14 },
-  { x: 670, y: 150, name: 'Sir Ganga Ram',         beds: 9  },
-  { x: 260, y: 400, name: 'Holy Family',           beds: 22 },
+  { x: 180, y: 110, name: 'AIIMS Delhi', beds: 42 },
+  { x: 500, y: 190, name: 'Apollo Hospital', beds: 18 },
+  { x: 330, y: 290, name: 'Safdarjung', beds: 7 },
+  { x: 90, y: 310, name: 'Ram Manohar Lohia', beds: 31 },
+  { x: 590, y: 330, name: 'Max Healthcare', beds: 25 },
+  { x: 410, y: 75, name: 'Fortis', beds: 14 },
+  { x: 670, y: 150, name: 'Sir Ganga Ram', beds: 9 },
+  { x: 260, y: 400, name: 'Holy Family', beds: 22 },
 ];
 
 const GRID_H = [80, 160, 240, 320, 400, 480];
@@ -31,18 +31,18 @@ const WAYPOINTS = [
 ];
 
 function BackgroundMap() {
-  const posRef   = useRef({ x: 60, y: 60 });
-  const rafRef   = useRef<number>(0);
-  const wpRef    = useRef(0);
-  const lastRef  = useRef(0);
+  const posRef = useRef({ x: 60, y: 60 });
+  const rafRef = useRef<number>(0);
+  const wpRef = useRef(0);
+  const lastRef = useRef(0);
 
   // very slow speed
   const SPEED = 0.18;
 
   const svgRef = useRef<SVGSVGElement>(null);
   const ambulanceCircleRef = useRef<SVGCircleElement>(null);
-  const ambulanceTextRef   = useRef<SVGTextElement>(null);
-  const routeRef           = useRef<SVGLineElement>(null);
+  const ambulanceTextRef = useRef<SVGTextElement>(null);
+  const routeRef = useRef<SVGLineElement>(null);
 
   useEffect(() => {
     const animate = (ts: number) => {
@@ -119,9 +119,9 @@ function BackgroundMap() {
       ))}
 
       {/* Diagonal connectors */}
-      <line x1={0}   y1={0}   x2={960} y2={520} stroke="rgba(16,185,129,0.07)" strokeWidth="1" strokeDasharray="10,14" />
-      <line x1={960} y1={0}   x2={0}   y2={520} stroke="rgba(16,185,129,0.07)" strokeWidth="1" strokeDasharray="10,14" />
-      <line x1={0}   y1={130} x2={960} y2={390} stroke="rgba(16,185,129,0.06)" strokeWidth="1" strokeDasharray="10,14" />
+      <line x1={0} y1={0} x2={960} y2={520} stroke="rgba(16,185,129,0.07)" strokeWidth="1" strokeDasharray="10,14" />
+      <line x1={960} y1={0} x2={0} y2={520} stroke="rgba(16,185,129,0.07)" strokeWidth="1" strokeDasharray="10,14" />
+      <line x1={0} y1={130} x2={960} y2={390} stroke="rgba(16,185,129,0.06)" strokeWidth="1" strokeDasharray="10,14" />
 
       {/* Intersections */}
       {GRID_H.map(hy => GRID_V.map(vx => (
@@ -219,9 +219,9 @@ function LocationButton() {
           animation: status === 'loading' ? 'spin 1s linear infinite' : 'none',
         }} />
         {status === 'loading' ? 'Detecting location…' :
-         status === 'done'    ? `📍 ${location}` :
-         status === 'error'   ? `⚠️ ${location}` :
-         'Detect My Location'}
+          status === 'done' ? `📍 ${location}` :
+            status === 'error' ? `⚠️ ${location}` :
+              'Detect My Location'}
       </button>
       {status === 'done' && (
         <p style={{ marginTop: '8px', fontSize: '12px', color: '#059669', animation: 'fadeSlideUp 0.4s ease-out' }}>
@@ -396,10 +396,10 @@ export default function Landing() {
             gap: '0', textAlign: 'center',
           }}>
             {[
-              { num: '8 min',  label: 'Avg Response Time', color: '#10b981' },
-              { num: '12k+',   label: 'Lives Impacted',    color: '#3b82f6' },
-              { num: '1.2k',   label: 'Active Ambulances', color: '#f59e0b' },
-              { num: '248',    label: 'Hospitals Connected',color: '#8b5cf6' },
+              { num: '8 min', label: 'Avg Response Time', color: '#10b981' },
+              { num: '12k+', label: 'Lives Impacted', color: '#3b82f6' },
+              { num: '1.2k', label: 'Active Ambulances', color: '#f59e0b' },
+              { num: '248', label: 'Hospitals Connected', color: '#8b5cf6' },
             ].map((s, i, arr) => (
               <div key={s.label} style={{
                 padding: '20px 12px',
@@ -424,9 +424,9 @@ export default function Landing() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             {[
               { Icon: ShieldAlert, color: '#ef4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.2)', step: '01', title: 'Instant SOS', text: 'Patient triggers SOS. GPS location and medical profile are instantly captured.' },
-              { Icon: MapPin,      color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)', step: '02', title: 'Live Tracking', text: 'Nearest ambulance is dispatched. Real-time maps track the route with live ETA.' },
-              { Icon: BrainCircuit,color: '#3b82f6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.2)', step: '03', title: 'AI Triage',   text: 'AI analyzes symptoms and recommends the best hospital based on bed availability.' },
-              { Icon: Activity,    color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.2)', step: '04', title: 'Hospital Prep',text: 'Hospital dashboard lights up. Doctors and ICU teams are notified before arrival.' },
+              { Icon: MapPin, color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)', step: '02', title: 'Live Tracking', text: 'Nearest ambulance is dispatched. Real-time maps track the route with live ETA.' },
+              { Icon: BrainCircuit, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.2)', step: '03', title: 'AI Triage', text: 'AI analyzes symptoms and recommends the best hospital based on bed availability.' },
+              { Icon: Activity, color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.2)', step: '04', title: 'Hospital Prep', text: 'Hospital dashboard lights up. Doctors and ICU teams are notified before arrival.' },
             ].map(({ Icon, color, bg, border, step, title, text }) => (
               <div
                 key={step}
