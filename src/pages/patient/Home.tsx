@@ -13,23 +13,43 @@ interface RealHospital {
   name: string;
 }
 
-// Fetch real nearby hospitals from OpenStreetMap Overpass (with 429 retry)
-async function fetchNearbyHospitals(lat: number, lon: number, retry = 0): Promise<RealHospital[]> {
+// Fetch real nearby hospitals from OpenStreetMap Overpass with robust fallbacks
+async function fetchNearbyHospitals(lat: number, lon: number): Promise<RealHospital[]> {
   const query = `[out:json][timeout:15];node["amenity"="hospital"](around:5000,${lat},${lon});out 20;`;
-  const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-  if (res.status === 429 && retry < 2) {
-    // Rate limited — wait and retry
-    await new Promise(r => setTimeout(r, 3000 * (retry + 1)));
-    return fetchNearbyHospitals(lat, lon, retry + 1);
+  const encodedQuery = encodeURIComponent(query);
+  
+  const endpoints = [
+    `https://overpass-api.de/api/interpreter?data=${encodedQuery}`,
+    `https://overpass.kumi.systems/api/interpreter?data=${encodedQuery}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://overpass-api.de/api/interpreter?data=${encodedQuery}`)}`
+  ];
+
+  let lastError: any;
+
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetch(endpoint);
+      if (!res.ok) {
+        throw new Error(`Overpass returned ${res.status}`);
+      }
+      const json = await res.json();
+      if (!json || !json.elements) {
+         throw new Error("Invalid response format");
+      }
+      return (json.elements as any[]).map((e: any) => ({
+        id: e.id,
+        lat: e.lat,
+        lng: e.lon,
+        name: e.tags?.name || e.tags?.['name:en'] || 'Hospital',
+      }));
+    } catch (err) {
+      console.warn(`Failed fetching from ${endpoint}:`, err);
+      lastError = err;
+      // Continue to the next endpoint
+    }
   }
-  if (!res.ok) throw new Error(`Overpass ${res.status}`);
-  const json = await res.json();
-  return (json.elements as any[]).map((e: any) => ({
-    id: e.id,
-    lat: e.lat,
-    lng: e.lon,
-    name: e.tags?.name || e.tags?.['name:en'] || 'Hospital',
-  }));
+  
+  throw lastError || new Error("All Overpass endpoints failed");
 }
 
 const S = {
