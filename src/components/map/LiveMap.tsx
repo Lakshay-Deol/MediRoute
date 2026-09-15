@@ -65,6 +65,10 @@ function RecenterMap({ center }: { center: LatLng }) {
   const map = useMap();
   useEffect(() => {
     map.setView([center.lat, center.lng]);
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 150);
+    return () => clearTimeout(timer);
   }, [center, map]);
   return null;
 }

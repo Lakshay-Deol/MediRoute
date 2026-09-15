@@ -1,34 +1,98 @@
 import { create } from 'zustand';
 import type { Role } from '../data/mockData';
+import { tokenStorage, loginUser, registerUser, getMe, type User as ApiUser } from '../services/api';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
   role: Role;
+  createdAt?: string;
 }
 
 interface AppState {
   role: Role | null;
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   setRole: (role: Role) => void;
-  login: (role: Role, email: string) => void;
+  setUser: (user: User | null) => void;
+  login: (credentials: { email: string; password: string }) => Promise<User>;
+  register: (data: { name: string; email: string; password: string; role: Role }) => Promise<User>;
   logout: () => void;
+  checkAuth: () => Promise<boolean>;
 }
 
-const MOCK_USERS: Record<Role, User> = {
-  patient: { id: 'p1', name: 'Arjun Mehta', email: 'arjun@email.com', role: 'patient' },
-  driver: { id: 'd1', name: 'Rajesh Kumar', email: 'rajesh@mediroute.in', role: 'driver' },
-  hospital: { id: 'h1', name: 'AIIMS Delhi', email: 'admin@aiims.edu', role: 'hospital' },
-  admin: { id: 'adm1', name: 'Control Center', email: 'admin@mediroute.in', role: 'admin' },
-};
+// Initial state from persisted localStorage if available
+const persistedUser = tokenStorage.getUser();
+const hasToken = !!tokenStorage.getToken();
 
 export const useAppStore = create<AppState>((set) => ({
-  role: null,
-  user: null,
-  isAuthenticated: false,
+  role: (persistedUser?.role as Role) || null,
+  user: (persistedUser as User) || null,
+  isAuthenticated: hasToken && !!persistedUser,
+  isLoading: false,
+
   setRole: (role) => set({ role }),
-  login: (role) => set({ role, user: MOCK_USERS[role], isAuthenticated: true }),
-  logout: () => set({ role: null, user: null, isAuthenticated: false }),
+  setUser: (user) => set({ user, role: user?.role || null, isAuthenticated: !!user }),
+
+  login: async (credentials) => {
+    set({ isLoading: true });
+    try {
+      const { user } = await loginUser(credentials);
+      const appUser = user as User;
+      set({
+        user: appUser,
+        role: appUser.role,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      return appUser;
+    } catch (err) {
+      set({ isLoading: false });
+      throw err;
+    }
+  },
+
+  register: async (data) => {
+    set({ isLoading: true });
+    try {
+      const { user } = await registerUser(data);
+      const appUser = user as User;
+      set({
+        user: appUser,
+        role: appUser.role,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      return appUser;
+    } catch (err) {
+      set({ isLoading: false });
+      throw err;
+    }
+  },
+
+  logout: () => {
+    tokenStorage.clear();
+    set({ role: null, user: null, isAuthenticated: false, isLoading: false });
+  },
+
+  checkAuth: async () => {
+    const token = tokenStorage.getToken();
+    if (!token) {
+      set({ isAuthenticated: false, user: null, role: null });
+      return false;
+    }
+    try {
+      const { user } = await getMe();
+      const appUser = user as User;
+      tokenStorage.setUser(appUser as ApiUser);
+      set({ user: appUser, role: appUser.role, isAuthenticated: true });
+      return true;
+    } catch (err) {
+      tokenStorage.clear();
+      set({ isAuthenticated: false, user: null, role: null });
+      return false;
+    }
+  },
 }));
