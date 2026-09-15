@@ -1,101 +1,184 @@
 <div align="center">
-  <img src="public/screenshots/landing.png" alt="MediRoute Landing Page" width="800" style="border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);"/>
+  <img src="public/screenshots/landing.png" alt="MediRoute Platform" width="850" style="border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid #e2e8f0;"/>
+  <br />
+  <br />
   <h1>🚑 MediRoute</h1>
-  <p><strong>Smart Emergency Dispatch Platform Powered by AI & Live Maps</strong></p>
+  <p><strong>Smart Emergency Dispatch Platform Powered by Live OpenStreetMap & Real-Time Telemetry</strong></p>
+
+  <p>
+    <img src="https://img.shields.io/badge/Frontend-React%2018%20%7C%20TypeScript%20%7C%20Vite-059669?style=for-the-badge" alt="Frontend" />
+    <img src="https://img.shields.io/badge/Backend-Node.js%20%7C%20Express%20%7C%20Prisma-2563eb?style=for-the-badge" alt="Backend" />
+    <img src="https://img.shields.io/badge/Maps-OpenStreetMap%20%7C%20Leaflet-10b981?style=for-the-badge" alt="Maps" />
+    <img src="https://img.shields.io/badge/Real--Time-Socket.io%20WebSockets-3b82f6?style=for-the-badge" alt="WebSockets" />
+    <img src="https://img.shields.io/badge/Database-SQLite%20via%20Prisma-0f172a?style=for-the-badge" alt="Database" />
+  </p>
 </div>
 
 <br />
 
-## 📖 Overview
+---
 
-**MediRoute** is a high-performance, real-time emergency response platform designed to bridge the gap between patients, ambulances, and hospitals. By leveraging live geolocation, AI triage, and the OpenStreetMap Overpass API, MediRoute ensures that critical care is dispatched faster and routed smarter. 
+## 📖 Executive Summary
 
-From the moment an SOS is triggered to the patient's arrival at the hospital, the platform provides seamless coordination between the **Patient**, **Ambulance Driver**, **Hospital Staff**, and **Platform Admins**.
+**MediRoute** is an end-to-end, high-performance emergency medical dispatch and live hospital bed coordination system. Built with a Zomato-inspired intuitive consumer interface wrapped in an **Emerald Green & Sapphire Blue** clinical design system, it eliminates emergency bottlenecks by connecting patients, ambulance operators, and hospital casualty wards in real time.
+
+Unlike static emergency directories, MediRoute queries **100% real-world hospital facilities dynamically from live OpenStreetMap & Nominatim geospatial registries**, ensuring accurate local facilities, real road distances, and exact ambulance ETAs wherever the patient is located.
 
 ---
 
-## 🌟 Key Features
+## 📸 Platform Showcase
 
-* **Real-Time Geolocation & Live Maps:** Instant detection of user coordinates, reverse-geocoded via Nominatim. Fully interactive Leaflet maps tracking real-world movements.
-* **Live Hospital Data:** Integrates with the **OpenStreetMap Overpass API** to fetch and plot actual hospitals within a 5km radius dynamically based on the patient's location.
-* **Smart Routing & ETA:** Computes Haversine distance to calculate accurate, real-time ETAs for incoming ambulances and routes to the selected hospital.
-* **AI-Assisted Triage:** Analyzes patient symptoms (e.g., Cardiac Arrest, Trauma) to recommend the best-equipped hospital based on real-time bed and ICU availability.
-* **Multi-Role Dashboards:**
-  * **Patient:** One-tap SOS, live ambulance tracking, and AI-ranked hospital selection.
-  * **Driver:** Turn-by-turn navigation, patient medical profile access, and hospital routing.
-  * **Hospital:** Incoming emergency alerts, bed/ICU inventory management, and pre-arrival prep.
-  * **Admin:** Overarching command center to monitor all active emergencies and fleet status.
+### 1. Zomato-Style Emergency Discovery Portal
+Dual floating search bar with instantaneous GPS reverse-geocoding, curated action cards, and live hospital collections ranked by proximity and ICU bed capacity.
 
----
-
-## 📸 Platform Previews
-
-### 1. Patient SOS Dashboard
-A streamlined, panic-proof interface allowing patients to trigger an SOS, input their emergency type, and select symptoms in seconds.
 <div align="center">
-  <img src="public/screenshots/patient-dashboard.png" alt="Patient SOS Dashboard" width="700" style="border-radius: 8px; border: 1px solid #e2e8f0;"/>
+  <img src="public/screenshots/landing.png" alt="MediRoute Landing" width="820" style="border-radius: 12px; border: 1.5px solid #cbd5e1; box-shadow: 0 6px 20px rgba(0,0,0,0.08);"/>
 </div>
 
 <br />
 
-### 2. Live Map & Ambulance Tracking
-Once an ambulance is dispatched, the patient can track its live location, view the driver's details, and see the exact ETA on an interactive map.
+### 2. Live Regional Hospital Registry
+Real medical facilities fetched live from OpenStreetMap Overpass & Nominatim with real-time bed inventory, verified coordinates, and direct Google Maps navigation.
+
 <div align="center">
-  <img src="public/screenshots/live-tracking.png" alt="Live Map Tracking" width="700" style="border-radius: 8px; border: 1px solid #e2e8f0;"/>
+  <img src="public/screenshots/hospital-collections.png" alt="Live Hospitals Grid" width="820" style="border-radius: 12px; border: 1.5px solid #cbd5e1; box-shadow: 0 6px 20px rgba(0,0,0,0.08);"/>
 </div>
+
+<br />
+
+### 3. Patient SOS & Live Interactive Tracking
+One-touch SOS button with instant triage, symptom tagging, interactive Leaflet map with **"🔍 Search This Area"** capability, and real-time ambulance tracking.
+
+<div align="center">
+  <img src="public/screenshots/live-tracking.png" alt="Live Tracking Dashboard" width="820" style="border-radius: 12px; border: 1.5px solid #cbd5e1; box-shadow: 0 6px 20px rgba(0,0,0,0.08);"/>
+</div>
+
+---
+
+## 🌟 Key Architecture & Capabilities
+
+### 🗺️ 100% Real Live Hospital Geolocation
+- **No Mock Hospital Fallbacks**: Completely eliminated static Delhi mock data. 
+- **Multi-Tag Medical Registry Search**: Queries OpenStreetMap nodes, ways, and relations across:
+  - `amenity=hospital`
+  - `amenity=clinic`
+  - `healthcare=hospital`
+  - `amenity=doctors`
+- **Smart Auto-Radius Expansion**: Queries within a 30 km radius and automatically widens to 50 km if fewer than 5 facilities are found.
+- **In-Memory Geo-Grid Caching**: Resolves repeated map queries in **< 100 ms**.
+- **Interactive Map Controls**: Includes **"📍 Use My GPS"** and a floating **"🔍 Search This Area"** button when panning anywhere in the country.
+- **Direct Navigation**: Deep-links to Google Maps with pre-computed origin and destination coordinates.
+
+### 🚑 Real-Time Ambulance Dispatch & Driver Radar
+- **Driver Console**: Incoming emergency alerts with countdown timer, patient blood group, severity, and pre-existing medical conditions.
+- **Simulated & Real GPS Driving**: Interactive driving simulation with speed telemetry and turn-by-turn routing directly to the patient and hospital.
+- **Socket.io WebSockets**: Live two-way coordinate broadcasts (`driver:location` -> `driver:location:update`).
+
+### 🏥 Hospital Casualty Ward Desk
+- **Triage Monitoring**: Real-time incoming ambulance alerts with patient vitals and symptoms.
+- **Bed & ICU Inventory Management**: Live counter for Emergency, ICU, General, and Pediatric wards with one-click increment/decrement controls.
+
+### 🔐 Real Production Authentication
+- **Secure Credentials**: Passwords salted and hashed with `bcryptjs`.
+- **Stateless Tokens**: Industry-standard signed JWT (`jsonwebtoken`) with 7-day expiration.
+- **Prisma & SQLite**: Persistent relational database storage for users, hospitals, ambulances, and emergency incidents.
 
 ---
 
 ## 🛠️ Technology Stack
 
-* **Frontend:** React 18, TypeScript, Vite
-* **Styling:** Tailwind CSS, Vanilla CSS (Glassmorphism & custom animations)
-* **Maps & Geospatial:** React-Leaflet, Leaflet.js
-* **APIs:** 
-  * OpenStreetMap Nominatim (Reverse Geocoding)
-  * OpenStreetMap Overpass API (Live Amenities/Hospital querying)
-* **State Management:** Zustand
-* **Icons:** Lucide React
+| Layer | Technology |
+|---|---|
+| **Frontend Framework** | React 18 with TypeScript |
+| **Build Tooling** | Vite 6.2 |
+| **Styling & Theme** | Tailwind CSS + Vanilla CSS (Glassmorphism & Micro-animations) |
+| **Maps & GIS** | React-Leaflet 5, Leaflet.js, OpenStreetMap Tiles |
+| **Live Geocoding** | OpenStreetMap Overpass API & Nominatim Reverse Geocoding |
+| **Backend Runtime** | Node.js (v20+) with Express |
+| **ORM & Database** | Prisma 6.4 with SQLite (`dev.db`) |
+| **Real-Time Transport**| Socket.io (WebSockets) |
+| **Icons** | Lucide React |
 
 ---
 
 ## 🚀 Getting Started
 
-Follow these instructions to set up the MediRoute platform locally.
-
 ### Prerequisites
-* Node.js (v18 or higher recommended)
-* npm or yarn
+- Node.js (v18.0 or higher; v20.17 recommended)
+- npm or yarn
 
-### Installation
+### 1. Installation
+Clone the repository and install dependencies for both frontend and backend:
 
-1. **Clone the repository:**
-   ```bash
-   git clone 
-   cd mediroute
-   ```
+```bash
+# Clone repository
+git clone <repo-url>
+cd MediRoute
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+# Install frontend dependencies
+npm install
 
-3. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
+# Install backend dependencies
+cd backend
+npm install
+cd ..
+```
 
-4. **Open your browser:**
-   Navigate to `http://localhost:5173` to view the application.
+### 2. Database Migration & Seeding
+Initialize the SQLite database with Prisma schema:
+
+```bash
+cd backend
+npx prisma generate
+npx prisma db push
+cd ..
+```
+
+### 3. Run Locally
+
+Open two terminal windows:
+
+**Terminal 1 — Start Backend Server (`:5000`):**
+```bash
+cd backend
+npm run dev
+```
+
+**Terminal 2 — Start Frontend Server (`:5173`):**
+```bash
+npm run dev
+```
+
+Visit **`http://localhost:5173`** in your browser.
 
 ---
 
-## 🗺️ How It Works (The Emergency Flow)
+## 👥 Default Demo Credentials
 
-1. **Instant SOS:** The patient triggers an SOS. GPS coordinates and medical profiles are instantly captured.
-2. **Live Tracking:** The nearest ambulance is dispatched. Real-time maps track the route with a live ETA.
-3. **AI Triage & Selection:** AI analyzes the patient's symptoms and ranks nearby hospitals fetched from OSM. The patient (or system) selects the optimal hospital.
-4. **Hospital Prep:** The destination hospital's dashboard lights up with the patient's ETA and medical details, allowing doctors and ICU teams to prepare before arrival.
+Pre-seeded accounts are available for testing role-specific features:
+
+| Role | Email | Password | Access Portal |
+|---|---|---|---|
+| **Patient** | `patient@mediroute.in` | `Password123!` | `/patient` |
+| **Ambulance Driver** | `driver@mediroute.in` | `Password123!` | `/driver` |
+| **Hospital Staff** | `hospital@mediroute.in` | `Password123!` | `/hospital` |
 
 ---
 
+## 🌐 API Endpoints Reference
+
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/api/auth/register` | Register new user account with role |
+| `POST` | `/api/auth/login` | Login and receive signed JWT token |
+| `GET` | `/api/auth/me` | Fetch authenticated user profile |
+| `GET` | `/api/hospitals/nearby?lat=...&lng=...` | **100% Real Live OSM hospital discovery** |
+| `GET` | `/api/ambulances` | List available ambulance fleet |
+| `POST` | `/api/emergencies` | Create emergency dispatch incident |
+| `GET` | `/api/emergencies` | List active emergency requests |
+| `PATCH` | `/api/emergencies/:id/status` | Update dispatch status (`en_route`, `arrived`) |
+
+---
+
+## 📄 License
+This project is open-source and licensed under the **MIT License**.

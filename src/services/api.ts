@@ -92,6 +92,11 @@ export async function getHospitals() {
   return handleResponse<any[]>(res);
 }
 
+export async function getNearbyHospitals(lat: number, lng: number): Promise<any[]> {
+  const res = await fetch(`${API_BASE}/hospitals/nearby?lat=${lat}&lng=${lng}`);
+  return handleResponse<any[]>(res);
+}
+
 export async function getAmbulances() {
   const res = await fetch(`${API_BASE}/ambulances`);
   return handleResponse<any[]>(res);

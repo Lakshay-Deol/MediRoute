@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { LatLng } from '../../data/mockData';
 
@@ -59,6 +59,7 @@ interface LiveMapProps {
   height?: string;
   className?: string;
   onMarkerClick?: (marker: MapMarker) => void;
+  onCenterChange?: (center: LatLng) => void;
 }
 
 function RecenterMap({ center }: { center: LatLng }) {
@@ -69,7 +70,19 @@ function RecenterMap({ center }: { center: LatLng }) {
       map.invalidateSize();
     }, 150);
     return () => clearTimeout(timer);
-  }, [center, map]);
+  }, [center.lat, center.lng, map]);
+  return null;
+}
+
+function MapMoveHandler({ onCenterChange }: { onCenterChange?: (center: LatLng) => void }) {
+  useMapEvents({
+    moveend: (e) => {
+      if (onCenterChange) {
+        const c = e.target.getCenter();
+        onCenterChange({ lat: c.lat, lng: c.lng });
+      }
+    },
+  });
   return null;
 }
 
@@ -81,6 +94,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({
   height = '400px',
   className = '',
   onMarkerClick,
+  onCenterChange,
 }) => {
   return (
     <div style={{ height }} className={`rounded-2xl overflow-hidden border border-slate-100 shadow-sm ${className}`}>
@@ -95,6 +109,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <RecenterMap center={center} />
+        <MapMoveHandler onCenterChange={onCenterChange} />
 
         {markers.map((marker, index) => {
           const icon =
