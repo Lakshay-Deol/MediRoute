@@ -5,6 +5,8 @@
   "main": "src/server.ts",
   "scripts": {
     "dev": "npx tsx watch src/server.ts",
+    "start": "npx prisma generate && npx prisma db push && npx tsx src/server.ts",
+    "build": "npx prisma generate",
     "db:push": "npx prisma db push",
     "db:generate": "npx prisma generate"
   },

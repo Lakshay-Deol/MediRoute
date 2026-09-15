@@ -2,6 +2,8 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import http from 'http';
+import path from 'path';
+import fs from 'fs';
 import { Server as SocketIOServer } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
@@ -575,6 +577,28 @@ async function seedInitialData() {
     }
   } catch (err) {
     console.error('Seeding error:', err);
+  }
+}
+
+// In production, serve built frontend assets if available
+const possibleDistPaths = [
+  path.resolve(process.cwd(), '../dist'),
+  path.resolve(process.cwd(), 'dist'),
+  path.resolve(__dirname, '../../dist'),
+  path.resolve(__dirname, '../dist'),
+];
+
+for (const dPath of possibleDistPaths) {
+  if (fs.existsSync(dPath) && fs.existsSync(path.join(dPath, 'index.html'))) {
+    console.log(`[Static] Serving frontend assets from: ${dPath}`);
+    app.use(express.static(dPath));
+    app.get('*', (req: Request, res: Response, next: NextFunction) => {
+      if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
+        return next();
+      }
+      res.sendFile(path.join(dPath, 'index.html'));
+    });
+    break;
   }
 }
 
