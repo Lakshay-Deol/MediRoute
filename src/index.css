@@ -2,12 +2,13 @@
 @import "leaflet/dist/leaflet.css";
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background: #060d18;
-  color: #f8fafc;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 input, textarea, select {
@@ -19,22 +20,56 @@ input::placeholder, textarea::placeholder {
   opacity: 1;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+* {
+  box-sizing: border-box;
 }
 
-* { box-sizing: border-box; }
+/* Zomato-style interactive card lift */
+.zomato-card {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+}
 
+.zomato-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(5, 150, 105, 0.1), 0 8px 16px rgba(37, 99, 235, 0.06);
+}
+
+.zomato-action-tile {
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.zomato-action-tile:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+}
+
+.zomato-tab-btn {
+  transition: all 0.2s ease;
+}
+
+.zomato-tab-btn:hover {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+/* Leaflet Container */
 .leaflet-container {
-  border-radius: 12px;
+  border-radius: 16px;
   font-family: 'Inter', sans-serif;
   z-index: 1;
 }
 
+/* Pulse Animations */
 @keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
   70% { box-shadow: 0 0 0 16px rgba(16, 185, 129, 0); }
   100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes pulse-blue {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5); }
+  70% { box-shadow: 0 0 0 16px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
 }
 
 @keyframes pulse-red {
@@ -44,11 +79,31 @@ input::placeholder, textarea::placeholder {
 }
 
 .pulse-green { animation: pulse-ring 2s infinite; }
+.pulse-blue { animation: pulse-blue 2s infinite; }
 .pulse-red { animation: pulse-red 2s infinite; }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.fade-in { animation: fadeIn 0.3s ease-out; }
+.fade-in { animation: fadeIn 0.35s ease-out; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

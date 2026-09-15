@@ -6,7 +6,6 @@ const ROLE_COLORS: Record<string, string> = {
   patient: '#3b82f6',
   driver: '#f59e0b',
   hospital: '#8b5cf6',
-  admin: '#059669',
 };
 
 export default function Navbar() {

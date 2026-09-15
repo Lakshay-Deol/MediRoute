@@ -9,21 +9,18 @@ const ROLES: { id: Role; label: string; icon: string; desc: string }[] = [
   { id: 'patient', label: 'Patient', icon: '🧑‍⚕️', desc: 'Request ambulance & track live ETA' },
   { id: 'driver', label: 'Driver', icon: '🚑', desc: 'Accept dispatches & route to patient' },
   { id: 'hospital', label: 'Hospital', icon: '🏥', desc: 'Manage ICU, emergency beds & triage' },
-  { id: 'admin', label: 'Admin', icon: '🛡️', desc: 'Unified control & fleet command' },
 ];
 
 const ROUTES: Record<Role, string> = {
   patient: '/patient',
   driver: '/driver',
   hospital: '/hospital',
-  admin: '/admin',
 };
 
 const DEMO_ACCOUNTS = [
   { role: 'patient' as Role, label: 'Patient', email: 'patient@mediroute.in', pass: 'Password123!', name: 'Arjun Mehta' },
   { role: 'driver' as Role, label: 'Driver', email: 'driver@mediroute.in', pass: 'Password123!', name: 'Rajesh Kumar' },
   { role: 'hospital' as Role, label: 'Hospital', email: 'hospital@mediroute.in', pass: 'Password123!', name: 'AIIMS Delhi' },
-  { role: 'admin' as Role, label: 'Admin', email: 'admin@mediroute.in', pass: 'Password123!', name: 'System Admin' },
 ];
 
 export default function Login() {

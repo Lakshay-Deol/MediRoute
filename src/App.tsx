@@ -8,7 +8,6 @@ import Login from './pages/Login';
 import PatientHome from './pages/patient/Home';
 import DriverHome from './pages/driver/Home';
 import HospitalHome from './pages/hospital/Home';
-import AdminHome from './pages/admin/Home';
 
 function Protected({ children, requiredRole }: { children: React.ReactNode; requiredRole?: Role }) {
   const { isAuthenticated, role } = useAppStore();
@@ -47,7 +46,6 @@ export default function App() {
         <Route path="/patient" element={<Protected requiredRole="patient"><PatientHome /></Protected>} />
         <Route path="/driver" element={<Protected requiredRole="driver"><DriverHome /></Protected>} />
         <Route path="/hospital" element={<Protected requiredRole="hospital"><HospitalHome /></Protected>} />
-        <Route path="/admin" element={<Protected requiredRole="admin"><AdminHome /></Protected>} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </>

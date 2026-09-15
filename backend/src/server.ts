@@ -87,7 +87,7 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Name, email, and password are required.' });
     }
 
-    const validRoles = ['patient', 'driver', 'hospital', 'admin'];
+    const validRoles = ['patient', 'driver', 'hospital'];
     const assignedRole = validRoles.includes(role) ? role : 'patient';
     const normalizedEmail = email.toLowerCase().trim();
 
@@ -306,7 +306,6 @@ async function seedInitialData() {
       { name: 'Arjun Mehta', email: 'patient@mediroute.in', password: 'Password123!', role: 'patient' },
       { name: 'Rajesh Kumar', email: 'driver@mediroute.in', password: 'Password123!', role: 'driver' },
       { name: 'AIIMS Delhi Control', email: 'hospital@mediroute.in', password: 'Password123!', role: 'hospital' },
-      { name: 'System Administrator', email: 'admin@mediroute.in', password: 'Password123!', role: 'admin' },
     ];
 
     for (const u of defaultUsers) {

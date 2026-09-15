@@ -6,7 +6,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'patient' | 'driver' | 'hospital' | 'admin';
+  role: 'patient' | 'driver' | 'hospital';
   createdAt?: string;
 }
 

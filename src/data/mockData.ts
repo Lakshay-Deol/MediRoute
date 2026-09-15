@@ -1,4 +1,4 @@
-export type Role = 'patient' | 'driver' | 'hospital' | 'admin';
+export type Role = 'patient' | 'driver' | 'hospital';
 
 export type EmergencyStatus = 'pending' | 'dispatched' | 'en_route' | 'arrived' | 'completed' | 'cancelled';
 export type AmbulanceStatus = 'available' | 'busy' | 'offline';
