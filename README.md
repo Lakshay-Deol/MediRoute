@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/screenshots/landing.png" alt="MediRoute Platform" width="850" style="border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid #e2e8f0;"/>
+  <img src="public/screenshots/mainimg.png" alt="MediRoute Platform" width="850" style="border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid #e2e8f0;"/>
   <br />
   <br />
   <h1>🚑 MediRoute</h1>
@@ -20,7 +20,7 @@
 
 ## 📖 Executive Summary
 
-**MediRoute** is an end-to-end, high-performance emergency medical dispatch and live hospital bed coordination system. Built with a Zomato-inspired intuitive consumer interface wrapped in an **Emerald Green & Sapphire Blue** clinical design system, it eliminates emergency bottlenecks by connecting patients, ambulance operators, and hospital casualty wards in real time.
+**MediRoute** is an end-to-end, high-performance emergency medical dispatch and live hospital bed coordination system. Built with an intuitive, consumer-first emergency discovery interface wrapped in an **Emerald Green & Sapphire Blue** clinical design system, it eliminates emergency bottlenecks by connecting patients, ambulance operators, and hospital casualty wards in real time.
 
 Unlike static emergency directories, MediRoute queries **100% real-world hospital facilities dynamically from live OpenStreetMap & Nominatim geospatial registries**, ensuring accurate local facilities, real road distances, and exact ambulance ETAs wherever the patient is located.
 
@@ -28,11 +28,11 @@ Unlike static emergency directories, MediRoute queries **100% real-world hospita
 
 ## 📸 Platform Showcase
 
-### 1. Zomato-Style Emergency Discovery Portal
+### 1. Smart Emergency Discovery Portal
 Dual floating search bar with instantaneous GPS reverse-geocoding, curated action cards, and live hospital collections ranked by proximity and ICU bed capacity.
 
 <div align="center">
-  <img src="public/screenshots/landing.png" alt="MediRoute Landing" width="820" style="border-radius: 12px; border: 1.5px solid #cbd5e1; box-shadow: 0 6px 20px rgba(0,0,0,0.08);"/>
+  <img src="public/screenshots/mainimg.png" alt="MediRoute Landing" width="820" style="border-radius: 12px; border: 1.5px solid #cbd5e1; box-shadow: 0 6px 20px rgba(0,0,0,0.08);"/>
 </div>
 
 <br />
