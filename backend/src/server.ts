@@ -603,7 +603,8 @@ for (const dPath of possibleDistPaths) {
 }
 
 // Start Server
-server.listen(PORT, async () => {
-  console.log(`🚑 MediRoute Server running on http://localhost:${PORT}`);
+const listenPort = Number(PORT) || 5000;
+server.listen(listenPort, '0.0.0.0', async () => {
+  console.log(`🚑 MediRoute Server running on http://0.0.0.0:${listenPort}`);
   await seedInitialData();
 });
