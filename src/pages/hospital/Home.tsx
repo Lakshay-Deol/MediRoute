@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '../../components/layout/Navbar';
 import { useEmergencyStore } from '../../store/useEmergencyStore';
 import { useBedSimulator } from '../../utils/simulators';
+import { getNearbyHospitals, type NearbyHospital } from '../../services/api';
 import toast from 'react-hot-toast';
+import { Building2, MapPin, Locate, Share2, Shield, Activity } from 'lucide-react';
 
 const S = {
   page: { minHeight: '100vh', background: '#f8fafc' },
-  content: { maxWidth: '900px', margin: '0 auto', padding: '24px 16px' },
-  card: { background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '20px', marginBottom: '16px' },
+  content: { maxWidth: '960px', margin: '0 auto', padding: '24px 16px' },
+  card: { background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '20px', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' },
   heading: { fontSize: '16px', fontWeight: '700', color: '#0f172a', marginBottom: '16px', marginTop: 0 },
 };
 
@@ -25,17 +27,84 @@ const WARD_DATA: Record<string, { total: number; occupied: number }> = {
 };
 
 export default function HospitalHome() {
-  const [tab, setTab] = useState<'dash' | 'beds' | 'incoming' | 'notify'>('dash');
+  const [tab, setTab] = useState<'dash' | 'beds' | 'incoming' | 'network' | 'notify'>('dash');
   const [selectedWard, setSelectedWard] = useState('General');
   const [beds, setBeds] = useState(() =>
     Object.fromEntries(Object.entries(WARD_DATA).map(([ward, d]) => [ward, generateBeds(d.total, d.occupied)]))
   );
   const [notifGroups, setNotifGroups] = useState<string[]>([]);
   const [message, setMessage] = useState('');
+  const [coords, setCoords] = useState<{ lat: number; lng: number }>({ lat: 28.5672, lng: 77.2100 });
+  const [networkHospitals, setNetworkHospitals] = useState<NearbyHospital[]>([]);
+  const [locating, setLocating] = useState(false);
   const { hospitals, requests } = useEmergencyStore();
   useBedSimulator();
 
-  const hospital = hospitals[0];
+  // Detect location on mount
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setCoords(c);
+          getNearbyHospitals(c.lat, c.lng).then(list => {
+            if (list && list.length > 0) setNetworkHospitals(list);
+          });
+        },
+        () => {
+          // fallback to IP
+          fetch('https://ipapi.co/json/')
+            .then(r => r.json())
+            .then(d => {
+              if (d.latitude && d.longitude) {
+                const c = { lat: Number(d.latitude), lng: Number(d.longitude) };
+                setCoords(c);
+                getNearbyHospitals(c.lat, c.lng).then(list => {
+                  if (list && list.length > 0) setNetworkHospitals(list);
+                });
+              }
+            })
+            .catch(() => {});
+        }
+      );
+    }
+  }, []);
+
+  const detectLocation = () => {
+    setLocating(true);
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setCoords(c);
+          getNearbyHospitals(c.lat, c.lng).then(list => {
+            if (list && list.length > 0) setNetworkHospitals(list);
+          });
+          setLocating(false);
+          toast.success('📍 Live hospital location acquired');
+        },
+        () => {
+          setLocating(false);
+          toast.error('Location permission unavailable');
+        }
+      );
+    }
+  };
+
+  const defaultHospital = hospitals[0] || {
+    name: 'AIIMS Control & Emergency Medical Operations',
+    address: 'Ansari Nagar, New Delhi',
+    availableBeds: 34,
+    totalBeds: 120,
+    icuAvailable: 8,
+    icuTotal: 25,
+    ventilatorsAvailable: 12,
+    ventilatorsTotal: 20,
+  };
+
+  const currentFacilityName = networkHospitals.length > 0 ? networkHospitals[0].name : defaultHospital.name;
+  const currentFacilityAddress = networkHospitals.length > 0 ? networkHospitals[0].address : defaultHospital.address;
+
   const incoming = requests.filter(r => r.assignedHospitalId === 'h1' && ['dispatched', 'en_route'].includes(r.status));
 
   const toggleBed = (ward: string, id: number) => {
@@ -52,8 +121,9 @@ export default function HospitalHome() {
 
   const tabs = [
     { id: 'dash', label: '🏠 Overview' },
-    { id: 'beds', label: '🛏 Beds' },
+    { id: 'beds', label: '🛏 Live Beds' },
     { id: 'incoming', label: `🚑 Incoming ${incoming.length > 0 ? `(${incoming.length})` : ''}` },
+    { id: 'network', label: `🏥 Referral Network (${networkHospitals.length})` },
     { id: 'notify', label: '🔔 Notify Staff' },
   ] as const;
 
@@ -64,6 +134,41 @@ export default function HospitalHome() {
     <div style={S.page}>
       <Navbar />
       <div style={S.content} className="fade-in">
+        
+        {/* Header with Location */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '8px' }}>
+          <div>
+            <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a', margin: '0 0 2px' }}>
+              {currentFacilityName}
+            </h1>
+            <p style={{ color: '#64748b', fontSize: '13px', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <MapPin size={13} color="#059669" />
+              <span>{currentFacilityAddress}</span>
+            </p>
+          </div>
+          <button
+            onClick={detectLocation}
+            disabled={locating}
+            style={{
+              padding: '8px 14px',
+              borderRadius: '8px',
+              border: '1.5px solid #cbd5e1',
+              background: '#fff',
+              color: '#334155',
+              fontSize: '12.5px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <Locate size={14} color="#059669" />
+            <span>{locating ? 'Locating...' : 'Sync GPS Location'}</span>
+          </button>
+        </div>
+
+        {/* Tab Switcher */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
           {tabs.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{
@@ -79,13 +184,8 @@ export default function HospitalHome() {
         </div>
 
         {/* Overview Tab */}
-        {tab === 'dash' && hospital && (
+        {tab === 'dash' && (
           <div>
-            <div style={{ marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a', margin: '0 0 4px' }}>{hospital.name}</h2>
-              <p style={{ color: '#64748b', fontSize: '13px', margin: 0 }}>📍 {hospital.address}</p>
-            </div>
-
             {incoming.length > 0 && (
               <div style={{ background: '#fff7ed', border: '2px solid #f97316', borderRadius: '12px', padding: '14px 16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontWeight: '700', color: '#c2410c' }}>🚑 {incoming.length} patient(s) incoming</span>
@@ -93,11 +193,11 @@ export default function HospitalHome() {
               </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
               {[
-                { label: 'Available Beds', value: hospital.availableBeds, total: hospital.totalBeds, color: '#059669' },
-                { label: 'ICU Available', value: hospital.icuAvailable, total: hospital.icuTotal, color: '#8b5cf6' },
-                { label: 'Ventilators', value: hospital.ventilatorsAvailable, total: hospital.ventilatorsTotal, color: '#0ea5e9' },
+                { label: 'Available Beds', value: defaultHospital.availableBeds, total: defaultHospital.totalBeds, color: '#059669' },
+                { label: 'ICU Available', value: defaultHospital.icuAvailable, total: defaultHospital.icuTotal, color: '#8b5cf6' },
+                { label: 'Ventilators', value: defaultHospital.ventilatorsAvailable, total: defaultHospital.ventilatorsTotal, color: '#0ea5e9' },
               ].map(s => {
                 const pct = (s.value / s.total) * 100;
                 return (
@@ -111,6 +211,28 @@ export default function HospitalHome() {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Quick Regional Hospital Registry Summary */}
+            <div style={S.card}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h2 style={{ ...S.heading, marginBottom: 0 }}>Regional Hospital Network Live Status</h2>
+                <button onClick={() => setTab('network')} style={{ background: 'none', border: 'none', color: '#059669', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
+                  View All ({networkHospitals.length}) →
+                </button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '10px' }}>
+                {networkHospitals.slice(1, 4).map(h => (
+                  <div key={h.id} style={{ padding: '12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontWeight: '700', fontSize: '14px', color: '#0f172a', marginBottom: '2px' }}>{h.name}</div>
+                    <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>{h.address}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: '600' }}>
+                      <span style={{ color: '#059669' }}>📍 {h.distance}</span>
+                      <span style={{ color: '#7c3aed' }}>🛏 {h.availableBeds} beds ({h.icuAvailable} ICU)</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -205,6 +327,82 @@ export default function HospitalHome() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Network & Transfer Tab */}
+        {tab === 'network' && (
+          <div>
+            <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', margin: '0 0 2px' }}>
+                  Nearby Referral Hospitals & Trauma Centers
+                </h2>
+                <p style={{ color: '#64748b', fontSize: '13px', margin: 0 }}>
+                  Real-time bed availability and inter-hospital emergency transfers based on your GPS sector
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {networkHospitals.map(h => (
+                <div
+                  key={h.id}
+                  style={{
+                    ...S.card,
+                    marginBottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '42px',
+                      height: '42px',
+                      background: '#ecfdf5',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '20px',
+                    }}>
+                      🏥
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>{h.name}</div>
+                      <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '2px' }}>{h.address}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '13.5px', fontWeight: '700', color: '#059669' }}>📍 {h.distance} ({h.eta})</div>
+                      <div style={{ fontSize: '12px', color: '#7c3aed', fontWeight: '600' }}>
+                        🛏 {h.availableBeds} beds ({h.icuAvailable} ICU)
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => toast.success(`Transfer dispatch request initiated with ${h.name}`)}
+                      style={{
+                        padding: '8px 14px',
+                        background: '#059669',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '12.5px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Request Transfer
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

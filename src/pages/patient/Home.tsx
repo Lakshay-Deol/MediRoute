@@ -294,6 +294,53 @@ export default function PatientHome() {
                 </div>
               </div>
 
+              {/* Nearest Verified Hospital Badge */}
+              {realHospitals.length > 0 && (
+                <div style={{
+                  background: '#f0fdf4',
+                  border: '1.5px solid #bbf7d0',
+                  borderRadius: '12px',
+                  padding: '12px 14px',
+                  marginBottom: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '22px' }}>🏥</span>
+                    <div>
+                      <div style={{ fontSize: '11px', color: '#166534', fontWeight: '700', textTransform: 'uppercase' }}>
+                        Nearest Receiving Hospital Assigned (Live GPS)
+                      </div>
+                      <div style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a' }}>
+                        {selectedHospId ? (realHospitals.find(h => h.id === selectedHospId)?.name || realHospitals[0].name) : realHospitals[0].name}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>
+                        {selectedHospId ? (realHospitals.find(h => h.id === selectedHospId)?.address || realHospitals[0].address) : realHospitals[0].address}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setTab('hospitals')}
+                    style={{
+                      padding: '6px 12px',
+                      background: '#059669',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Change Hospital →
+                  </button>
+                </div>
+              )}
+
               <button onClick={handleDispatch} style={{ ...S.btn('#ef4444'), width: '100%', padding: '14px', fontSize: '15px' }}>
                 🚑 Request Ambulance
               </button>
